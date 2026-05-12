@@ -9,6 +9,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Setup Java Toolchain Environment
         uses: actions/setup-java@v4
@@ -16,28 +17,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Compilation Toolchain and Build Core Native
-        run: |
-          cd modules/lwjgl/core/src/main/c
-          mkdir build && cd build
-          cmake -DCMAKE_SYSTEM_NAME=iOS \
-                -DCMAKE_OSX_ARCHITECTURES=arm64 \
-                -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
-                ..
-          make
+      - name: Install Apache Ant
+        run: brew install ant
 
-      - name: Setup and Build Jemalloc Native Module
+      - name: Compile LWJGL Core Natives for iOS
         run: |
-          cd modules/lwjgl/jemalloc/src/main/c
-          mkdir build && cd build
-          cmake -DCMAKE_SYSTEM_NAME=iOS \
-                -DCMAKE_OSX_ARCHITECTURES=arm64 \
-                -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
-                ..
-          make || echo "Skipping module compilation check"
+          ant compile-native -Dplatform=macos -Darch=arm64 -Dbinding.core=true
+          
+          # Force the load commands to switch from macOS to iOS platform
+          cd bin/libs/native/macosx/arm64
+          for file in *.dylib; do
+            xcrun vtool -arch arm64 -set-build-version ios 14.0 14.0 -replace -output "$file" "$file"
+          done
 
       - name: Package and Upload iOS Dylibs
         uses: actions/upload-artifact@v4
         with:
           name: lwjgl341-ios-arm64-natives
-          path: "**/*.dylib"
+          path: "bin/libs/native/macosx/arm64/*.dylib"
