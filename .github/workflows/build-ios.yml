@@ -22,16 +22,16 @@ jobs:
 
       - name: Compile LWJGL Templates and Core Natives
         run: |
-          # 1. Download necessary build-time libraries
-          ant update-dependencies
+          # 1. Force all binary libraries to be downloaded via the correct xml path config
+          ant -f update_dependencies.xml
           
-          # 2. Invoke the missing template target required by LWJGL
+          # 2. Invoke the template generator target
           ant compile-templates
           
-          # 3. Build the core C binaries
+          # 3. Build the core C binaries targeting Apple Silicon
           ant compile-native -Dplatform=macos -Darch=arm64 -Dbinding.core=true
           
-          # 4. Modify load commands to switch from macOS to iOS platform
+          # 4. Modify load commands to switch from macOS to iOS platform structural layers
           cd bin/libs/native/macosx/arm64
           for file in *.dylib; do
             xcrun vtool -arch arm64 -set-build-version ios 14.0 14.0 -replace -output "$file" "$file"
