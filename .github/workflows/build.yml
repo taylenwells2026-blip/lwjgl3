@@ -331,7 +331,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lwjgl-macos-arm64-natives
-          path: bin/libs/macosx/**/*.dylib
+          path: path: bin/libs/native/macos/arm64/org/lwjgl/**/*.dylib
 
   windows:
     name: Windows
