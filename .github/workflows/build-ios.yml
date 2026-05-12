@@ -17,19 +17,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Apache Ant
-        run: brew install ant
+      - name: Install Apache Ant and Developer Tools
+        run: |
+          brew install ant
+          # Link Xcode's standard active command line compiler
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
 
       - name: Compile LWJGL Templates and Core Natives
         run: |
-          # 1. Initialize the system directories and download internal assets
+          # 1. Initialize system directories
           ant init
           
           # 2. Invoke the template generator target
           ant compile-templates
           
-          # 3. Build the core C binaries targeting Apple Silicon
-          ant compile-native -Dplatform=macos -Darch=arm64 -Dbinding.core=true
+          # 3. Explicitly pass compiler mapping flags to Ant for Apple Silicon
+          ant compile-native \
+            -Dplatform=macos \
+            -Darch=arm64 \
+            -Dbinding.core=true \
+            -Dtarget.mac=true \
+            -DCC=clang \
+            -DCXX=clang++
           
           # 4. Modify load commands to switch from macOS to iOS platform structural layers
           cd bin/libs/native/macosx/arm64
