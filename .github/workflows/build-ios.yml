@@ -20,18 +20,12 @@ jobs:
       - name: Install Apache Ant and Developer Tools
         run: |
           brew install ant
-          # Link Xcode's standard active command line compiler
           sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
 
       - name: Compile LWJGL Templates and Core Natives
         run: |
-          # 1. Initialize system directories
           ant init
-          
-          # 2. Invoke the template generator target
           ant compile-templates
-          
-          # 3. Explicitly pass compiler mapping flags to Ant for Apple Silicon
           ant compile-native \
             -Dplatform=macos \
             -Darch=arm64 \
@@ -40,9 +34,9 @@ jobs:
             -DCC=clang \
             -DCXX=clang++
           
-          # 4. Modify load commands to switch from macOS to iOS platform structural layers
-          cd bin/libs/native/macosx/arm64
-          for file in *.dylib; do
+          # Find all newly generated dylibs dynamically and patch them for iOS
+          find bin/ -name "*.dylib" | while read -r file; do
+            echo "Patching header for: $file"
             xcrun vtool -arch arm64 -set-build-version ios 14.0 14.0 -replace -output "$file" "$file"
           done
 
@@ -50,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lwjgl341-ios-arm64-natives
-          path: "bin/libs/native/macosx/arm64/*.dylib"
+          path: "bin/**/*.dylib"
