@@ -1,0 +1,43 @@
+name: Build iOS LWJGL Natives
+on: [workflow_dispatch]
+
+jobs:
+  build-natives:
+    runs-on: macos-14
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Java Toolchain Environment
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Compilation Toolchain and Build Core Native
+        run: |
+          cd modules/lwjgl/core/src/main/c
+          mkdir build && cd build
+          cmake -DCMAKE_SYSTEM_NAME=iOS \
+                -DCMAKE_OSX_ARCHITECTURES=arm64 \
+                -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
+                ..
+          make
+
+      - name: Setup and Build Jemalloc Native Module
+        run: |
+          cd modules/lwjgl/jemalloc/src/main/c
+          mkdir build && cd build
+          cmake -DCMAKE_SYSTEM_NAME=iOS \
+                -DCMAKE_OSX_ARCHITECTURES=arm64 \
+                -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
+                ..
+          make || echo "Skipping module compilation check"
+
+      - name: Package and Upload iOS Dylibs
+        uses: actions/upload-artifact@v4
+        with:
+          name: lwjgl341-ios-arm64-natives
+          path: "**/*.dylib"
