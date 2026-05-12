@@ -22,8 +22,8 @@ jobs:
 
       - name: Compile LWJGL Templates and Core Natives
         run: |
-          # 1. Force all binary libraries to be downloaded via the correct xml path config
-          ant -f update_dependencies.xml
+          # 1. Initialize the system directories and download internal assets
+          ant init
           
           # 2. Invoke the template generator target
           ant compile-templates
