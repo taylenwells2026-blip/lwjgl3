@@ -323,7 +323,12 @@ jobs:
         run: JAVA_HOME=jdk-graalvm/Contents/Home ant demo -Dclass=org.lwjgl.demo.util.lz4.HelloLZ4
       - name: Run demo with GraalVM Native Image
         run: ./org.lwjgl.demo.util.lz4.hellolz4
-
+      - name: Upload arm64 natives
+        if: matrix.ARCH == 'arm64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lwjgl-macos-arm64-natives
+          path: bin/libs/macosx/**/*.dylib
   windows:
     name: Windows
     needs: cache-kotlinc
